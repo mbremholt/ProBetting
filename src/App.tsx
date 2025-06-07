@@ -12,7 +12,6 @@ import {
   CircularProgress,
   Box,
   Chip,
-  Button,
   createTheme,
   ThemeProvider,
   CssBaseline
@@ -141,10 +140,6 @@ function App() {
 
     loadData();
   }, []);
-
-  const handleShowH2H = async (matchId: number) => {
-    // This line is removed as per the instructions
-  };
 
   const isGoodBet = (h2h: any, aForm: string, bForm: string) => {
     if (!h2h) return false;

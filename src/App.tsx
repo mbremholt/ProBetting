@@ -213,7 +213,7 @@ function App() {
         <TableCell>{match.sub_tournament_name}</TableCell>
         <TableCell>
           {h2h
-            ? `${h2h.aWins}V/${h2h.aLosses}F, ${h2h.bWins}V/${h2h.bLosses}F`
+            ? `${h2h.aWins}W/${h2h.aLosses}L, ${h2h.bWins}W/${h2h.bLosses}L`
             : '-'}
         </TableCell>
         <TableCell>{aForm}</TableCell>

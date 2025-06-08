@@ -5,6 +5,13 @@ const API_URL = '/api/proxy?target=match-list-data/22';
 
 export const fetchMatchListData = async (): Promise<MatchListData> => {
   try {
+    // Get today's date and format it
+    const today = new Date();
+    const fromDate = new Date(today);
+    fromDate.setHours(0, 0, 0, 0);
+    const toDate = new Date(today);
+    toDate.setHours(23, 59, 59, 999);
+
     const response = await axios.get(API_URL, {
       params: {
         lang: 'en',
@@ -12,8 +19,8 @@ export const fetchMatchListData = async (): Promise<MatchListData> => {
         subtournamentIds: '70521,70503',
         sort: 'alpha',
         short: 0,
-        from: '2025-06-06 00:00:00',
-        to: '2025-06-07 23:59:59'
+        from: fromDate.toISOString().slice(0, 19).replace('T', ' '),
+        to: toDate.toISOString().slice(0, 19).replace('T', ' ')
       }
     });
 

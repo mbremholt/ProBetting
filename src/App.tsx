@@ -169,14 +169,14 @@ function App() {
     const last5B = (h2hRaw?.total?.away_team || []).slice(0, 5);
 
     // Get today's matches for each player
-    const todayMatchesA = (h2hRaw?.total?.home_team || []).filter((m: any) => isTodayUTC(m.date));
-    const todayMatchesB = (h2hRaw?.total?.away_team || []).filter((m: any) => isTodayUTC(m.date));
+    const todayMatchesA = (h2hRaw?.total?.home_team || []).filter((m: any) => isTodayUTC(m.date)).slice(0, 5);
+    const todayMatchesB = (h2hRaw?.total?.away_team || []).filter((m: any) => isTodayUTC(m.date)).slice(0, 5);
 
-    const aForm = last5A.length > 0
-      ? last5A.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
+    const aForm = todayMatchesA.length > 0
+      ? todayMatchesA.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
       : '-';
-    const bForm = last5B.length > 0
-      ? last5B.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
+    const bForm = todayMatchesB.length > 0
+      ? todayMatchesB.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
       : '-';
 
     const goodBet = isGoodBet(h2h, aForm, bForm);
@@ -222,28 +222,6 @@ function App() {
         </TableCell>
         <TableCell sx={{ color: '#1db954' }}>{aForm}</TableCell>
         <TableCell sx={{ color: '#1db954' }}>{bForm}</TableCell>
-        <TableCell>
-          {todayMatchesA.length > 0 ? (
-            <Box>
-              {todayMatchesA.map((m: any, i: number) => (
-                <Box key={i} sx={{ fontSize: '0.9em', mb: 0.5 }}>
-                  {new Date(m.date).toLocaleTimeString()} - {m.home_team} vs {m.away_team} ({m.score.home_team}-{m.score.away_team})
-                </Box>
-              ))}
-            </Box>
-          ) : '-'}
-        </TableCell>
-        <TableCell>
-          {todayMatchesB.length > 0 ? (
-            <Box>
-              {todayMatchesB.map((m: any, i: number) => (
-                <Box key={i} sx={{ fontSize: '0.9em', mb: 0.5 }}>
-                  {new Date(m.date).toLocaleTimeString()} - {m.home_team} vs {m.away_team} ({m.score.home_team}-{m.score.away_team})
-                </Box>
-              ))}
-            </Box>
-          ) : '-'}
-        </TableCell>
         <TableCell sx={{ color: '#1db954' }}>
           {last5A.length > 0
             ? last5A.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
@@ -364,10 +342,8 @@ function App() {
                   <TableCell>Away Team</TableCell>
                   <TableCell>Tournament</TableCell>
                   <TableCell>H2H (A W/L, B W/L)</TableCell>
-                  <TableCell>Form (A)</TableCell>
-                  <TableCell>Form (B)</TableCell>
-                  <TableCell>Today's Matches (A)</TableCell>
-                  <TableCell>Today's Matches (B)</TableCell>
+                  <TableCell>Today's Form (A)</TableCell>
+                  <TableCell>Today's Form (B)</TableCell>
                   <TableCell>Last 5 Matches (A)</TableCell>
                   <TableCell>Last 5 Matches (B)</TableCell>
                 </TableRow>

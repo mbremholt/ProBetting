@@ -220,14 +220,14 @@ function App() {
             ? `${h2h.aWins}W/${h2h.aLosses}L, ${h2h.bWins}W/${h2h.bLosses}L`
             : '-'}
         </TableCell>
-        <TableCell sx={{ color: '#1db954' }}>{aForm}</TableCell>
-        <TableCell sx={{ color: '#1db954' }}>{bForm}</TableCell>
-        <TableCell sx={{ color: '#1db954' }}>
+        <TableCell sx={{ color: '#1db954', minWidth: '120px', whiteSpace: 'nowrap' }}>{aForm}</TableCell>
+        <TableCell sx={{ color: '#1db954', minWidth: '120px', whiteSpace: 'nowrap' }}>{bForm}</TableCell>
+        <TableCell sx={{ color: '#1db954', minWidth: '120px', whiteSpace: 'nowrap' }}>
           {last5A.length > 0
             ? last5A.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
             : '-'}
         </TableCell>
-        <TableCell sx={{ color: '#1db954' }}>
+        <TableCell sx={{ color: '#1db954', minWidth: '120px', whiteSpace: 'nowrap' }}>
           {last5B.length > 0
             ? last5B.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
             : '-'}

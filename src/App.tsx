@@ -164,15 +164,19 @@ function App() {
     const h2h = h2hSummary[match.id];
     const h2hRaw = h2hResultsById[match.id];
 
-    // Get last 5 matches for each player (today)
-    const last5A = (h2hRaw?.total?.home_team || []).filter((m: any) => isTodayUTC(m.date));
-    const last5B = (h2hRaw?.total?.away_team || []).filter((m: any) => isTodayUTC(m.date));
+    // Get last 5 matches for each player (all time)
+    const last5A = (h2hRaw?.total?.home_team || []).slice(0, 5);
+    const last5B = (h2hRaw?.total?.away_team || []).slice(0, 5);
+
+    // Get today's matches for each player
+    const todayMatchesA = (h2hRaw?.total?.home_team || []).filter((m: any) => isTodayUTC(m.date));
+    const todayMatchesB = (h2hRaw?.total?.away_team || []).filter((m: any) => isTodayUTC(m.date));
 
     const aForm = last5A.length > 0
-      ? last5A.map((m: any) => (m.badge === 'W' ? '✔️' : '❌')).join(' ')
+      ? last5A.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
       : '-';
     const bForm = last5B.length > 0
-      ? last5B.map((m: any) => (m.badge === 'W' ? '✔️' : '❌')).join(' ')
+      ? last5B.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
       : '-';
 
     const goodBet = isGoodBet(h2h, aForm, bForm);
@@ -216,8 +220,52 @@ function App() {
             ? `${h2h.aWins}W/${h2h.aLosses}L, ${h2h.bWins}W/${h2h.bLosses}L`
             : '-'}
         </TableCell>
-        <TableCell>{aForm}</TableCell>
-        <TableCell>{bForm}</TableCell>
+        <TableCell sx={{ color: '#1db954' }}>{aForm}</TableCell>
+        <TableCell sx={{ color: '#1db954' }}>{bForm}</TableCell>
+        <TableCell>
+          {todayMatchesA.length > 0 ? (
+            <Box>
+              {todayMatchesA.map((m: any, i: number) => (
+                <Box key={i} sx={{ fontSize: '0.9em', mb: 0.5 }}>
+                  {new Date(m.date).toLocaleTimeString()} - {m.home_team} vs {m.away_team} ({m.score.home_team}-{m.score.away_team})
+                </Box>
+              ))}
+            </Box>
+          ) : '-'}
+        </TableCell>
+        <TableCell>
+          {todayMatchesB.length > 0 ? (
+            <Box>
+              {todayMatchesB.map((m: any, i: number) => (
+                <Box key={i} sx={{ fontSize: '0.9em', mb: 0.5 }}>
+                  {new Date(m.date).toLocaleTimeString()} - {m.home_team} vs {m.away_team} ({m.score.home_team}-{m.score.away_team})
+                </Box>
+              ))}
+            </Box>
+          ) : '-'}
+        </TableCell>
+        <TableCell>
+          {last5A.length > 0 ? (
+            <Box>
+              {last5A.map((m: any, i: number) => (
+                <Box key={i} sx={{ fontSize: '0.9em', mb: 0.5 }}>
+                  {new Date(m.date).toLocaleDateString()} - {m.home_team} vs {m.away_team} ({m.score.home_team}-{m.score.away_team})
+                </Box>
+              ))}
+            </Box>
+          ) : '-'}
+        </TableCell>
+        <TableCell>
+          {last5B.length > 0 ? (
+            <Box>
+              {last5B.map((m: any, i: number) => (
+                <Box key={i} sx={{ fontSize: '0.9em', mb: 0.5 }}>
+                  {new Date(m.date).toLocaleDateString()} - {m.home_team} vs {m.away_team} ({m.score.home_team}-{m.score.away_team})
+                </Box>
+              ))}
+            </Box>
+          ) : '-'}
+        </TableCell>
       </TableRow>
     );
   };
@@ -292,7 +340,7 @@ function App() {
                 textShadow: '0 1px 6px #0008',
               }}
             >
-              Statistics and form for today's matches
+              Statistics and form for all matches
             </Typography>
           </Box>
 
@@ -330,6 +378,10 @@ function App() {
                   <TableCell>H2H (A W/L, B W/L)</TableCell>
                   <TableCell>Form (A)</TableCell>
                   <TableCell>Form (B)</TableCell>
+                  <TableCell>Today's Matches (A)</TableCell>
+                  <TableCell>Today's Matches (B)</TableCell>
+                  <TableCell>Last 5 Matches (A)</TableCell>
+                  <TableCell>Last 5 Matches (B)</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

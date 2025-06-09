@@ -5,13 +5,25 @@ const API_URL = '/api/proxy?target=match-list-data/22';
 
 export const fetchMatchListData = async (): Promise<MatchListData> => {
   try {
+    // Get date range for the last 7 days and next 7 days
+    const today = new Date();
+    const fromDate = new Date(today);
+    fromDate.setDate(fromDate.getDate() - 7); // 7 days ago
+    fromDate.setHours(0, 0, 0, 0);
+    
+    const toDate = new Date(today);
+    toDate.setDate(toDate.getDate() + 7); // 7 days from now
+    toDate.setHours(23, 59, 59, 999);
+
     const response = await axios.get(API_URL, {
       params: {
         lang: 'en',
         type: 'not_started',
         subtournamentIds: '70521,70503',
         sort: 'alpha',
-        short: 0
+        short: 0,
+        from: fromDate.toISOString().slice(0, 19).replace('T', ' '),
+        to: toDate.toISOString().slice(0, 19).replace('T', ' ')
       }
     });
 

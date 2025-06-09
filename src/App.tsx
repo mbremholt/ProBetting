@@ -244,27 +244,15 @@ function App() {
             </Box>
           ) : '-'}
         </TableCell>
-        <TableCell>
-          {last5A.length > 0 ? (
-            <Box>
-              {last5A.map((m: any, i: number) => (
-                <Box key={i} sx={{ fontSize: '0.9em', mb: 0.5 }}>
-                  {new Date(m.date).toLocaleDateString()} - {m.home_team} vs {m.away_team} ({m.score.home_team}-{m.score.away_team})
-                </Box>
-              ))}
-            </Box>
-          ) : '-'}
+        <TableCell sx={{ color: '#1db954' }}>
+          {last5A.length > 0
+            ? last5A.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
+            : '-'}
         </TableCell>
-        <TableCell>
-          {last5B.length > 0 ? (
-            <Box>
-              {last5B.map((m: any, i: number) => (
-                <Box key={i} sx={{ fontSize: '0.9em', mb: 0.5 }}>
-                  {new Date(m.date).toLocaleDateString()} - {m.home_team} vs {m.away_team} ({m.score.home_team}-{m.score.away_team})
-                </Box>
-              ))}
-            </Box>
-          ) : '-'}
+        <TableCell sx={{ color: '#1db954' }}>
+          {last5B.length > 0
+            ? last5B.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
+            : '-'}
         </TableCell>
       </TableRow>
     );

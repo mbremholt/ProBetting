@@ -14,25 +14,50 @@ import {
   Chip,
   createTheme,
   ThemeProvider,
-  CssBaseline
+  CssBaseline,
+  Divider
 } from '@mui/material';
 import { fetchMatchListData, fetchH2H } from './services/api';
 import { Match } from './types/api';
 import { keyframes } from '@mui/system';
+import StarIcon from '@mui/icons-material/Star';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
 
 const theme = createTheme({
   palette: {
     mode: 'dark',
-    primary: { main: '#1db954' }, // Spotify green
-    secondary: { main: '#191414' }, // Spotify dark background
-    background: { default: '#191414', paper: '#222326' },
-    text: { primary: '#fff', secondary: '#b3b3b3' },
+    primary: { main: '#2f81f7' }, // GitHub blue
+    secondary: { main: '#2383e2' },
+    background: { default: '#0d1117', paper: '#161b22' },
+    text: { primary: '#c9d1d9', secondary: '#8b949e' },
   },
   shape: { borderRadius: 0 },
   typography: {
-    fontFamily: 'Montserrat, "Circular", "Roboto", Arial, sans-serif',
-    h4: { fontWeight: 800, letterSpacing: 1 },
+    fontFamily: 'Inter, Montserrat, "Circular", "Roboto", Arial, sans-serif',
+    h4: { fontWeight: 900, letterSpacing: 1.5 },
     h5: { fontWeight: 700 },
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+          boxShadow: 'none',
+        },
+      },
+    },
+    MuiTableContainer: {
+      styleOverrides: {
+        root: {
+          borderRadius: 0,
+          boxShadow: 'none',
+        },
+      },
+    },
   },
 });
 
@@ -44,6 +69,12 @@ const shake = keyframes`
   60% { transform: rotate(2deg) scale(1.12); }
   80% { transform: rotate(-2deg) scale(1.09); }
   100% { transform: rotate(0deg) scale(1.1); }
+`;
+
+// Add fade-in animation
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
 `;
 
 function normalizeName(name: string | undefined) {
@@ -67,6 +98,8 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [h2hSummary, setH2hSummary] = useState<{ [key: number]: { aWins: number, bWins: number, aLosses: number, bLosses: number } }>({});
   const [h2hResultsById, setH2hResultsById] = useState<{ [key: number]: any }>({});
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -158,6 +191,15 @@ function App() {
     return (aWinRate > 0.6 && aRecentWins >= 3) || (bWinRate > 0.6 && bRecentWins >= 3);
   };
 
+  const handleRowClick = (match: Match) => {
+    setSelectedMatch(match);
+    setModalOpen(true);
+  };
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setSelectedMatch(null);
+  };
+
   const renderMatchRow = (match: Match, index: number) => {
     const homeTeam = match.participants.find(p => p.type === 'home_team');
     const awayTeam = match.participants.find(p => p.type === 'away_team');
@@ -186,13 +228,15 @@ function App() {
         key={match.id}
         sx={{
           '&:hover': {
-            background: 'linear-gradient(90deg, #232323 0%, #1db95411 100%)',
-            boxShadow: '0 0 8px 1px #1db95422',
+            background: '#23272e',
             zIndex: 1,
           },
-          backgroundColor: (index % 2 === 0) ? '#232323' : '#191414',
-          transition: 'background 0.3s, box-shadow 0.3s',
+          backgroundColor: (index % 2 === 0) ? '#161b22' : '#0d1117',
+          borderBottom: '1px solid #21262d',
+          transition: 'background 0.2s',
+          cursor: 'pointer',
         }}
+        onClick={() => handleRowClick(match)}
       >
         <TableCell>{new Date(match.start_date).toLocaleString()}</TableCell>
         <TableCell>
@@ -200,14 +244,19 @@ function App() {
             {homeTeam?.name}
             {goodBet && (
               <Chip 
-                label="Good Bet" 
+                label={<><StarIcon sx={{ fontSize: 16, mr: 0.5, mb: '-2px' }} />Good Bet</>}
                 size="small" 
                 sx={{ 
-                  bgcolor: '#1db954',
+                  bgcolor: '#2f81f7',
                   color: 'white',
                   fontWeight: 'bold',
-                  animation: `${shake} 0.5s ease-in-out`,
-                  borderRadius: 0,
+                  borderRadius: 1,
+                  letterSpacing: 0.5,
+                  boxShadow: '0 2px 8px 0 #2f81f744',
+                  fontSize: { xs: 12, sm: 14 },
+                  px: 1.2,
+                  py: 0.2,
+                  ml: 1,
                 }} 
               />
             )}
@@ -216,9 +265,34 @@ function App() {
         <TableCell><Box display="inline-flex" alignItems="center" gap={1}>{awayTeam?.name}</Box></TableCell>
         <TableCell>{match.sub_tournament_name}</TableCell>
         <TableCell>
-          {h2h
-            ? `${h2h.aWins}W/${h2h.aLosses}L, ${h2h.bWins}W/${h2h.bLosses}L`
-            : '-'}
+          {h2h ? (
+            h2h.aWins === 0 && h2h.aLosses === 0 && h2h.bWins === 0 && h2h.bLosses === 0 ? (
+              <span style={{ color: '#b3b3b3', fontStyle: 'italic' }}>No previous H2H matches</span>
+            ) : (
+              <Box display="flex" flexDirection="column" gap={0.5}>
+                <Box>
+                  {Array.from({ length: h2h.aWins }).map((_, i) => (
+                    <span key={`a-win-${i}`} style={{ color: '#1db954', fontWeight: 'bold', fontSize: '1.1em' }}>✓</span>
+                  ))}
+                  {Array.from({ length: h2h.aLosses }).map((_, i) => (
+                    <span key={`a-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em' }}>❌</span>
+                  ))}
+                  <span style={{ marginLeft: 6, color: '#b3b3b3', fontSize: '0.95em' }}>(A)</span>
+                </Box>
+                <Box>
+                  {Array.from({ length: h2h.bWins }).map((_, i) => (
+                    <span key={`b-win-${i}`} style={{ color: '#1db954', fontWeight: 'bold', fontSize: '1.1em' }}>✓</span>
+                  ))}
+                  {Array.from({ length: h2h.bLosses }).map((_, i) => (
+                    <span key={`b-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em' }}>❌</span>
+                  ))}
+                  <span style={{ marginLeft: 6, color: '#b3b3b3', fontSize: '0.95em' }}>(B)</span>
+                </Box>
+              </Box>
+            )
+          ) : (
+            '-'
+          )}
         </TableCell>
         <TableCell sx={{ color: '#1db954', minWidth: '120px', whiteSpace: 'nowrap' }}>{aForm}</TableCell>
         <TableCell sx={{ color: '#1db954', minWidth: '120px', whiteSpace: 'nowrap' }}>{bForm}</TableCell>
@@ -257,25 +331,32 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box display="flex" minHeight="100vh" bgcolor="background.default">
+      <Box display="flex" minHeight="100vh" bgcolor="background.default" sx={{ width: '100vw', minHeight: '100vh', p: 0, m: 0 }}>
         <Container
-          maxWidth="lg"
+          disableGutters
           sx={{
-            py: 4,
+            width: '100vw',
             minHeight: '100vh',
             background: 'none',
             flex: 1,
+            p: 0,
+            m: 0,
           }}
         >
           <Box
             sx={{
-              width: '100%',
-              px: { xs: 2, sm: 4 },
-              py: 5,
+              width: '100vw',
+              px: 0,
+              py: { xs: 2, sm: 5 },
               mb: 4,
               borderRadius: 0,
-              background: 'linear-gradient(180deg, #00b3b3 0%, #006666 100%)',
-              boxShadow: 3,
+              background: 'linear-gradient(120deg, #161b22 0%, #0d1117 100%)',
+              boxShadow: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: { xs: 120, sm: 180 },
             }}
           >
             <Typography
@@ -286,10 +367,11 @@ function App() {
                 textAlign: 'center',
                 mt: 0,
                 mb: 1,
-                color: 'white',
+                color: '#c9d1d9',
                 letterSpacing: 2,
-                textShadow: '0 2px 8px #0008',
-                fontFamily: 'Montserrat, "Circular", "Roboto", Arial, sans-serif',
+                textShadow: 'none',
+                fontFamily: 'Inter, Montserrat, "Circular", "Roboto", Arial, sans-serif',
+                fontSize: { xs: 28, sm: 36 },
               }}
             >
               Upcoming Matches
@@ -299,70 +381,204 @@ function App() {
               sx={{
                 textAlign: 'center',
                 mb: 0,
-                color: 'white',
-                fontWeight: 700,
-                fontFamily: 'Montserrat, "Circular", "Roboto", Arial, sans-serif',
+                color: '#8b949e',
+                fontWeight: 600,
+                fontFamily: 'Inter, Montserrat, "Circular", "Roboto", Arial, sans-serif',
                 letterSpacing: 1,
-                textShadow: '0 1px 6px #0008',
+                textShadow: 'none',
+                fontSize: { xs: 16, sm: 20 },
               }}
             >
               Statistics and form for all matches
             </Typography>
           </Box>
 
-          <TableContainer 
-            component={Paper} 
-            elevation={4} 
-            sx={{ 
-              mt: 4, 
-              borderRadius: 0,
-              boxShadow: 6, 
-              overflow: 'hidden', 
-              bgcolor: '#222326' 
-            }}
-          >
-            <Table>
-              <TableHead>
-                <TableRow sx={{
-                  background: 'linear-gradient(90deg, #232323 0%, #1db954 100%)',
-                  '& th': {
-                    color: '#fff',
-                    fontWeight: 900,
-                    fontSize: 16,
-                    letterSpacing: 1,
-                    fontFamily: 'Montserrat, "Circular", "Roboto", Arial, sans-serif',
-                    textShadow: '0 2px 8px #1db95444',
-                    borderBottom: '2px solid #1db954',
-                    position: 'relative',
-                    py: 2,
-                  },
-                }}>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Home Team</TableCell>
-                  <TableCell>Away Team</TableCell>
-                  <TableCell>Tournament</TableCell>
-                  <TableCell>H2H (A W/L, B W/L)</TableCell>
-                  <TableCell>Today's Form (A)</TableCell>
-                  <TableCell>Today's Form (B)</TableCell>
-                  <TableCell>Last 5 Matches (A)</TableCell>
-                  <TableCell>Last 5 Matches (B)</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {matches && matches.length > 0 ? (
-                  matches.map((match, index) => renderMatchRow(match, index))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      No matches found
-                    </TableCell>
+          <Box sx={{ width: '100vw', overflowX: 'auto', p: 0, m: 0 }}>
+            <TableContainer 
+              component={Paper} 
+              elevation={0} 
+              sx={{ 
+                mt: 4, 
+                borderRadius: 0,
+                boxShadow: 'none',
+                overflow: 'auto', 
+                bgcolor: 'background.paper',
+                width: '100vw',
+                minWidth: 600,
+                p: 0,
+                m: 0,
+                border: '1px solid #30363d',
+                // Modern scrollbar
+                '&::-webkit-scrollbar': {
+                  height: 8,
+                  background: '#161b22',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: '#30363d',
+                  borderRadius: 4,
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  background: '#2f81f7',
+                },
+              }}
+            >
+              <Table sx={{ width: '100vw', minWidth: 600 }} size="small">
+                <TableHead>
+                  <TableRow sx={{
+                    background: '#21262d',
+                    boxShadow: '0 4px 16px 0 #2f81f733',
+                    '& th': {
+                      color: '#f0f6fc',
+                      fontWeight: 900,
+                      fontSize: { xs: 13, sm: 18 },
+                      letterSpacing: 1,
+                      fontFamily: 'Inter, Montserrat, "Circular", "Roboto", Arial, sans-serif',
+                      textShadow: 'none',
+                      borderBottom: '2px solid #30363d',
+                      position: 'relative',
+                      py: { xs: 1.2, sm: 2.2 },
+                      px: { xs: 1, sm: 2 },
+                      borderTopLeftRadius: 0,
+                      borderTopRightRadius: 0,
+                    },
+                  }}>
+                    <TableCell>Date</TableCell>
+                    <TableCell>Home Team</TableCell>
+                    <TableCell>Away Team</TableCell>
+                    <TableCell>Tournament</TableCell>
+                    <TableCell>H2H (A W/L, B W/L)</TableCell>
+                    <TableCell>Today's Form (A)</TableCell>
+                    <TableCell>Today's Form (B)</TableCell>
+                    <TableCell>Last 5 Matches (A)</TableCell>
+                    <TableCell>Last 5 Matches (B)</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {matches && matches.length > 0 ? (
+                    matches.map((match, index) => renderMatchRow(match, index))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center">
+                        No matches found
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
         </Container>
       </Box>
+      {/* Modal for match details */}
+      <Dialog open={modalOpen} onClose={handleModalClose} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#161b22', color: '#c9d1d9', borderRadius: 2 } }}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#21262d', color: '#f0f6fc', fontWeight: 700, fontSize: 22 }}>
+          Match Details
+          <IconButton onClick={handleModalClose} sx={{ color: '#8b949e' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 3 }}>
+          {selectedMatch && (
+            <Box>
+              <Typography variant="h6" sx={{ mb: 1, color: '#2f81f7', fontWeight: 700 }}>
+                {selectedMatch.participants.find(p => p.type === 'home_team')?.name} vs {selectedMatch.participants.find(p => p.type === 'away_team')?.name}
+              </Typography>
+              <Typography sx={{ mb: 1 }}>
+                <b>Date:</b> {new Date(selectedMatch.start_date).toLocaleString()}
+              </Typography>
+              <Typography sx={{ mb: 1 }}>
+                <b>Tournament:</b> {selectedMatch.sub_tournament_name}
+              </Typography>
+              <Divider sx={{ my: 2, bgcolor: '#30363d' }} />
+              <Typography sx={{ mb: 1, fontWeight: 600 }}>H2H (A W/L, B W/L):</Typography>
+              {h2hSummary[selectedMatch.id] ? (
+                h2hSummary[selectedMatch.id].aWins === 0 && h2hSummary[selectedMatch.id].aLosses === 0 && h2hSummary[selectedMatch.id].bWins === 0 && h2hSummary[selectedMatch.id].bLosses === 0 ? (
+                  <span style={{ color: '#b3b3b3', fontStyle: 'italic' }}>No previous H2H matches</span>
+                ) : (
+                  <Box display="flex" flexDirection="column" gap={0.5}>
+                    <Box>
+                      {Array.from({ length: h2hSummary[selectedMatch.id].aWins }).map((_, i) => (
+                        <span key={`modal-a-win-${i}`} style={{ color: '#2f81f7', fontWeight: 'bold', fontSize: '1.1em' }}>✓</span>
+                      ))}
+                      {Array.from({ length: h2hSummary[selectedMatch.id].aLosses }).map((_, i) => (
+                        <span key={`modal-a-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em' }}>❌</span>
+                      ))}
+                      <span style={{ marginLeft: 6, color: '#b3b3b3', fontSize: '0.95em' }}>(A)</span>
+                    </Box>
+                    <Box>
+                      {Array.from({ length: h2hSummary[selectedMatch.id].bWins }).map((_, i) => (
+                        <span key={`modal-b-win-${i}`} style={{ color: '#2f81f7', fontWeight: 'bold', fontSize: '1.1em' }}>✓</span>
+                      ))}
+                      {Array.from({ length: h2hSummary[selectedMatch.id].bLosses }).map((_, i) => (
+                        <span key={`modal-b-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em' }}>❌</span>
+                      ))}
+                      <span style={{ marginLeft: 6, color: '#b3b3b3', fontSize: '0.95em' }}>(B)</span>
+                    </Box>
+                  </Box>
+                )
+              ) : (
+                <span>-</span>
+              )}
+              <Divider sx={{ my: 2, bgcolor: '#30363d' }} />
+              <Typography sx={{ mb: 1, fontWeight: 600 }}>Today's Form:</Typography>
+              <Box display="flex" gap={2}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#8b949e' }}>A</Typography>
+                  <Typography sx={{ color: '#2f81f7', fontWeight: 600 }}>
+                    {(() => {
+                      const h2hRaw = h2hResultsById[selectedMatch.id];
+                      const todayMatchesA = (h2hRaw?.total?.home_team || []).filter((m: any) => isTodayUTC(m.date)).slice(0, 5);
+                      return todayMatchesA.length > 0
+                        ? todayMatchesA.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
+                        : '-';
+                    })()}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#8b949e' }}>B</Typography>
+                  <Typography sx={{ color: '#2f81f7', fontWeight: 600 }}>
+                    {(() => {
+                      const h2hRaw = h2hResultsById[selectedMatch.id];
+                      const todayMatchesB = (h2hRaw?.total?.away_team || []).filter((m: any) => isTodayUTC(m.date)).slice(0, 5);
+                      return todayMatchesB.length > 0
+                        ? todayMatchesB.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
+                        : '-';
+                    })()}
+                  </Typography>
+                </Box>
+              </Box>
+              <Divider sx={{ my: 2, bgcolor: '#30363d' }} />
+              <Typography sx={{ mb: 1, fontWeight: 600 }}>Last 5 Matches:</Typography>
+              <Box display="flex" gap={2}>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#8b949e' }}>A</Typography>
+                  <Typography sx={{ color: '#2f81f7', fontWeight: 600 }}>
+                    {(() => {
+                      const h2hRaw = h2hResultsById[selectedMatch.id];
+                      const last5A = (h2hRaw?.total?.home_team || []).slice(0, 5);
+                      return last5A.length > 0
+                        ? last5A.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
+                        : '-';
+                    })()}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="body2" sx={{ color: '#8b949e' }}>B</Typography>
+                  <Typography sx={{ color: '#2f81f7', fontWeight: 600 }}>
+                    {(() => {
+                      const h2hRaw = h2hResultsById[selectedMatch.id];
+                      const last5B = (h2hRaw?.total?.away_team || []).slice(0, 5);
+                      return last5B.length > 0
+                        ? last5B.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
+                        : '-';
+                    })()}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
     </ThemeProvider>
   );
 }

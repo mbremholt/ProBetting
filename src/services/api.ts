@@ -1,7 +1,15 @@
 import axios from 'axios';
 import { MatchListData } from '../types/api';
 
-const API_URL = '/api/proxy?target=match-list-data/22';
+const USE_PROXY = true; // Set to false to bypass the proxy
+
+function getApiUrl(target: string) {
+  if (USE_PROXY) {
+    return `/api/proxy?target=${encodeURIComponent(target)}`;
+  } else {
+    return `https://24live.com/api/${target}`;
+  }
+}
 
 export const fetchMatchListData = async (): Promise<MatchListData> => {
   try {
@@ -15,7 +23,7 @@ export const fetchMatchListData = async (): Promise<MatchListData> => {
     toDate.setDate(toDate.getDate() + 7); // 7 days from now
     toDate.setHours(23, 59, 59, 999);
 
-    const response = await axios.get(API_URL, {
+    const response = await axios.get(getApiUrl('match-list-data/22'), {
       params: {
         lang: 'en',
         type: 'not_started',
@@ -39,7 +47,7 @@ export const fetchMatchListData = async (): Promise<MatchListData> => {
 };
 
 export const fetchH2H = async (matchId: number) => {
-  const url = `/api/proxy?target=match/${matchId}`;
+  const url = getApiUrl(`match/${matchId}`);
   const response = await axios.get(url, {
     params: {
       lang: 'en',

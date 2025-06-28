@@ -25,6 +25,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 
 const theme = createTheme({
   palette: {
@@ -73,6 +74,13 @@ function isTodayUTC(dateString: string) {
     matchDate.getUTCMonth() === now.getUTCMonth() &&
     matchDate.getUTCDate() === now.getUTCDate()
   );
+}
+
+function getInitialAndLastName(name: string | undefined) {
+  if (!name) return '';
+  const parts = name.trim().split(' ');
+  if (parts.length === 1) return name;
+  return `${parts[0][0]}.${parts.slice(1).join(' ')}`;
 }
 
 function App() {
@@ -198,13 +206,13 @@ function App() {
     const todayMatchesB = (h2hRaw?.total?.away_team || []).filter((m: any) => isTodayUTC(m.date)).slice(0, 5);
 
     const aForm = todayMatchesA.length > 0
-      ? todayMatchesA.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
-      : '-';
+      ? todayMatchesA.map((m: any) => (m.badge === 'W' ? '✓' : '❌'))
+      : null;
     const bForm = todayMatchesB.length > 0
-      ? todayMatchesB.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
-      : '-';
+      ? todayMatchesB.map((m: any) => (m.badge === 'W' ? '✓' : '❌'))
+      : null;
 
-    const goodBet = isGoodBet(h2h, aForm, bForm);
+    const goodBet = isGoodBet(h2h, aForm?.join(' ') || '', bForm?.join(' ') || '');
 
     return (
       <TableRow
@@ -254,22 +262,26 @@ function App() {
             ) : (
               <Box display="flex" flexDirection="column" gap={0.5}>
                 <Box>
-                  {Array.from({ length: h2h.aWins }).map((_, i) => (
-                    <span key={`a-win-${i}`} style={{ color: '#1db954', fontWeight: 'bold', fontSize: '1.1em' }}>✓</span>
-                  ))}
-                  {Array.from({ length: h2h.aLosses }).map((_, i) => (
-                    <span key={`a-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em' }}>❌</span>
-                  ))}
-                  <span style={{ marginLeft: 6, color: '#b3b3b3', fontSize: '0.95em' }}>(A)</span>
+                  <>
+                    {Array.from({ length: h2h.aWins }).map((_, i) => (
+                      <span key={`a-win-${i}`} style={{ color: '#1db954', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>✓</span>
+                    ))}
+                    {Array.from({ length: h2h.aLosses }).map((_, i) => (
+                      <span key={`a-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>❌</span>
+                    ))}
+                    <span style={{ marginLeft: 6, color: '#b3b3b3', fontSize: '0.95em' }}>({getInitialAndLastName(match.participants.find(p => p.type === 'home_team')?.name)})</span>
+                  </>
                 </Box>
                 <Box>
-                  {Array.from({ length: h2h.bWins }).map((_, i) => (
-                    <span key={`b-win-${i}`} style={{ color: '#1db954', fontWeight: 'bold', fontSize: '1.1em' }}>✓</span>
-                  ))}
-                  {Array.from({ length: h2h.bLosses }).map((_, i) => (
-                    <span key={`b-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em' }}>❌</span>
-                  ))}
-                  <span style={{ marginLeft: 6, color: '#b3b3b3', fontSize: '0.95em' }}>(B)</span>
+                  <>
+                    {Array.from({ length: h2h.bWins }).map((_, i) => (
+                      <span key={`b-win-${i}`} style={{ color: '#1db954', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>✓</span>
+                    ))}
+                    {Array.from({ length: h2h.bLosses }).map((_, i) => (
+                      <span key={`b-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>❌</span>
+                    ))}
+                    <span style={{ marginLeft: 6, color: '#b3b3b3', fontSize: '0.95em' }}>({getInitialAndLastName(match.participants.find(p => p.type === 'away_team')?.name)})</span>
+                  </>
                 </Box>
               </Box>
             )
@@ -277,17 +289,29 @@ function App() {
             '-'
           )}
         </TableCell>
-        <TableCell sx={{ color: '#1db954', minWidth: '120px', whiteSpace: 'nowrap' }}>{aForm}</TableCell>
-        <TableCell sx={{ color: '#1db954', minWidth: '120px', whiteSpace: 'nowrap' }}>{bForm}</TableCell>
+        <TableCell sx={{ color: '#1db954', minWidth: '120px', whiteSpace: 'nowrap' }}>
+          {aForm ? aForm.map((v: string, i: number) => (
+            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: v === '✓' ? '#1db954' : '#e53935' }}>{v}</span>
+          )) : <RemoveCircleOutlineIcon sx={{ color: '#ff9800', fontSize: 22, verticalAlign: 'middle' }} />}
+        </TableCell>
+        <TableCell sx={{ color: '#1db954', minWidth: '120px', whiteSpace: 'nowrap' }}>
+          {bForm ? bForm.map((v: string, i: number) => (
+            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: v === '✓' ? '#1db954' : '#e53935' }}>{v}</span>
+          )) : <RemoveCircleOutlineIcon sx={{ color: '#ff9800', fontSize: 22, verticalAlign: 'middle' }} />}
+        </TableCell>
         <TableCell sx={{ color: '#1db954', minWidth: '120px', whiteSpace: 'nowrap' }}>
           {last5A.length > 0
-            ? last5A.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
-            : '-'}
+            ? last5A.map((m: any, i: number) => (
+                <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#1db954' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
+              ))
+            : <RemoveCircleOutlineIcon sx={{ color: '#ff9800', fontSize: 22, verticalAlign: 'middle' }} />}
         </TableCell>
         <TableCell sx={{ color: '#1db954', minWidth: '120px', whiteSpace: 'nowrap' }}>
           {last5B.length > 0
-            ? last5B.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
-            : '-'}
+            ? last5B.map((m: any, i: number) => (
+                <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#1db954' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
+              ))
+            : <RemoveCircleOutlineIcon sx={{ color: '#ff9800', fontSize: 22, verticalAlign: 'middle' }} />}
         </TableCell>
       </TableRow>
     );
@@ -429,11 +453,11 @@ function App() {
                     <TableCell>Home Team</TableCell>
                     <TableCell>Away Team</TableCell>
                     <TableCell>Tournament</TableCell>
-                    <TableCell>H2H (A W/L, B W/L)</TableCell>
+                    <TableCell>H2H</TableCell>
+                    <TableCell>Today's Form (H)</TableCell>
                     <TableCell>Today's Form (A)</TableCell>
-                    <TableCell>Today's Form (B)</TableCell>
+                    <TableCell>Last 5 Matches (H)</TableCell>
                     <TableCell>Last 5 Matches (A)</TableCell>
-                    <TableCell>Last 5 Matches (B)</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -473,29 +497,33 @@ function App() {
                 <b>Tournament:</b> {selectedMatch.sub_tournament_name}
               </Typography>
               <Divider sx={{ my: 2, bgcolor: '#30363d' }} />
-              <Typography sx={{ mb: 1, fontWeight: 600 }}>H2H (A W/L, B W/L):</Typography>
+              <Typography sx={{ mb: 1, fontWeight: 600 }}>H2H:</Typography>
               {h2hSummary[selectedMatch.id] ? (
                 h2hSummary[selectedMatch.id].aWins === 0 && h2hSummary[selectedMatch.id].aLosses === 0 && h2hSummary[selectedMatch.id].bWins === 0 && h2hSummary[selectedMatch.id].bLosses === 0 ? (
                   <span style={{ color: '#b3b3b3', fontStyle: 'italic' }}>No previous H2H matches</span>
                 ) : (
                   <Box display="flex" flexDirection="column" gap={0.5}>
                     <Box>
-                      {Array.from({ length: h2hSummary[selectedMatch.id].aWins }).map((_, i) => (
-                        <span key={`modal-a-win-${i}`} style={{ color: '#2f81f7', fontWeight: 'bold', fontSize: '1.1em' }}>✓</span>
-                      ))}
-                      {Array.from({ length: h2hSummary[selectedMatch.id].aLosses }).map((_, i) => (
-                        <span key={`modal-a-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em' }}>❌</span>
-                      ))}
-                      <span style={{ marginLeft: 6, color: '#b3b3b3', fontSize: '0.95em' }}>(A)</span>
+                      <>
+                        {Array.from({ length: h2hSummary[selectedMatch.id].aWins }).map((_, i) => (
+                          <span key={`modal-a-win-${i}`} style={{ color: '#2f81f7', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>✓</span>
+                        ))}
+                        {Array.from({ length: h2hSummary[selectedMatch.id].aLosses }).map((_, i) => (
+                          <span key={`modal-a-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>❌</span>
+                        ))}
+                        <span style={{ marginLeft: 6, color: '#b3b3b3', fontSize: '0.95em' }}>({getInitialAndLastName(selectedMatch.participants.find(p => p.type === 'home_team')?.name)})</span>
+                      </>
                     </Box>
                     <Box>
-                      {Array.from({ length: h2hSummary[selectedMatch.id].bWins }).map((_, i) => (
-                        <span key={`modal-b-win-${i}`} style={{ color: '#2f81f7', fontWeight: 'bold', fontSize: '1.1em' }}>✓</span>
-                      ))}
-                      {Array.from({ length: h2hSummary[selectedMatch.id].bLosses }).map((_, i) => (
-                        <span key={`modal-b-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em' }}>❌</span>
-                      ))}
-                      <span style={{ marginLeft: 6, color: '#b3b3b3', fontSize: '0.95em' }}>(B)</span>
+                      <>
+                        {Array.from({ length: h2hSummary[selectedMatch.id].bWins }).map((_, i) => (
+                          <span key={`modal-b-win-${i}`} style={{ color: '#2f81f7', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>✓</span>
+                        ))}
+                        {Array.from({ length: h2hSummary[selectedMatch.id].bLosses }).map((_, i) => (
+                          <span key={`modal-b-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>❌</span>
+                        ))}
+                        <span style={{ marginLeft: 6, color: '#b3b3b3', fontSize: '0.95em' }}>({getInitialAndLastName(selectedMatch.participants.find(p => p.type === 'away_team')?.name)})</span>
+                      </>
                     </Box>
                   </Box>
                 )
@@ -506,26 +534,34 @@ function App() {
               <Typography sx={{ mb: 1, fontWeight: 600 }}>Today's Form:</Typography>
               <Box display="flex" gap={2}>
                 <Box>
-                  <Typography variant="body2" sx={{ color: '#8b949e' }}>A</Typography>
+                  <Typography variant="body2" sx={{ color: '#8b949e' }}>
+                    {selectedMatch.participants.find(p => p.type === 'home_team')?.name}
+                  </Typography>
                   <Typography sx={{ color: '#2f81f7', fontWeight: 600 }}>
                     {(() => {
                       const h2hRaw = h2hResultsById[selectedMatch.id];
                       const todayMatchesA = (h2hRaw?.total?.home_team || []).filter((m: any) => isTodayUTC(m.date)).slice(0, 5);
                       return todayMatchesA.length > 0
-                        ? todayMatchesA.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
-                        : '-';
+                        ? todayMatchesA.map((m: any, i: number) => (
+                            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#2f81f7' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
+                          ))
+                        : <RemoveCircleOutlineIcon sx={{ color: '#ff9800', fontSize: 22, verticalAlign: 'middle' }} />;
                     })()}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: '#8b949e' }}>B</Typography>
+                  <Typography variant="body2" sx={{ color: '#8b949e' }}>
+                    {selectedMatch.participants.find(p => p.type === 'away_team')?.name}
+                  </Typography>
                   <Typography sx={{ color: '#2f81f7', fontWeight: 600 }}>
                     {(() => {
                       const h2hRaw = h2hResultsById[selectedMatch.id];
                       const todayMatchesB = (h2hRaw?.total?.away_team || []).filter((m: any) => isTodayUTC(m.date)).slice(0, 5);
                       return todayMatchesB.length > 0
-                        ? todayMatchesB.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
-                        : '-';
+                        ? todayMatchesB.map((m: any, i: number) => (
+                            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#2f81f7' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
+                          ))
+                        : <RemoveCircleOutlineIcon sx={{ color: '#ff9800', fontSize: 22, verticalAlign: 'middle' }} />;
                     })()}
                   </Typography>
                 </Box>
@@ -534,26 +570,34 @@ function App() {
               <Typography sx={{ mb: 1, fontWeight: 600 }}>Last 5 Matches:</Typography>
               <Box display="flex" gap={2}>
                 <Box>
-                  <Typography variant="body2" sx={{ color: '#8b949e' }}>A</Typography>
+                  <Typography variant="body2" sx={{ color: '#8b949e' }}>
+                    {selectedMatch.participants.find(p => p.type === 'home_team')?.name}
+                  </Typography>
                   <Typography sx={{ color: '#2f81f7', fontWeight: 600 }}>
                     {(() => {
                       const h2hRaw = h2hResultsById[selectedMatch.id];
                       const last5A = (h2hRaw?.total?.home_team || []).slice(0, 5);
                       return last5A.length > 0
-                        ? last5A.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
-                        : '-';
+                        ? last5A.map((m: any, i: number) => (
+                            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#2f81f7' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
+                          ))
+                        : <RemoveCircleOutlineIcon sx={{ color: '#ff9800', fontSize: 22, verticalAlign: 'middle' }} />;
                     })()}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="body2" sx={{ color: '#8b949e' }}>B</Typography>
+                  <Typography variant="body2" sx={{ color: '#8b949e' }}>
+                    {selectedMatch.participants.find(p => p.type === 'away_team')?.name}
+                  </Typography>
                   <Typography sx={{ color: '#2f81f7', fontWeight: 600 }}>
                     {(() => {
                       const h2hRaw = h2hResultsById[selectedMatch.id];
                       const last5B = (h2hRaw?.total?.away_team || []).slice(0, 5);
                       return last5B.length > 0
-                        ? last5B.map((m: any) => (m.badge === 'W' ? '✓' : '❌')).join(' ')
-                        : '-';
+                        ? last5B.map((m: any, i: number) => (
+                            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#2f81f7' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
+                          ))
+                        : <RemoveCircleOutlineIcon sx={{ color: '#ff9800', fontSize: 22, verticalAlign: 'middle' }} />;
                     })()}
                   </Typography>
                 </Box>

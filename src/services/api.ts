@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { MatchListData } from '../types/api';
 
-const USE_PROXY = true; // Set to false to bypass the proxy
+const USE_PROXY = false; // Set to false to bypass the proxy
 
 function getApiUrl(target: string) {
   if (USE_PROXY) {

@@ -61,22 +61,6 @@ const theme = createTheme({
   },
 });
 
-// Add a shake animation
-const shake = keyframes`
-  0% { transform: rotate(-2deg) scale(1.05); }
-  20% { transform: rotate(2deg) scale(1.1); }
-  40% { transform: rotate(-2deg) scale(1.08); }
-  60% { transform: rotate(2deg) scale(1.12); }
-  80% { transform: rotate(-2deg) scale(1.09); }
-  100% { transform: rotate(0deg) scale(1.1); }
-`;
-
-// Add fade-in animation
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: none; }
-`;
-
 function normalizeName(name: string | undefined) {
   return (name || '').replace(/\./g, '').trim().toLowerCase();
 }

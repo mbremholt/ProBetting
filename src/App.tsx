@@ -26,6 +26,8 @@ import DialogContent from '@mui/material/DialogContent';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import { keyframes } from '@mui/system';
+import Fade from '@mui/material/Fade';
 
 const theme = createTheme({
   palette: {
@@ -60,6 +62,24 @@ const theme = createTheme({
     },
   },
 });
+
+const glowVs = keyframes`
+  0% { color: #ff4081; text-shadow: 0 0 8px #ff4081, 0 0 16px #ff4081; }
+  20% { color: #00bcd4; text-shadow: 0 0 8px #00bcd4, 0 0 16px #00bcd4; }
+  40% { color: #cddc39; text-shadow: 0 0 8px #cddc39, 0 0 16px #cddc39; }
+  60% { color: #ff9800; text-shadow: 0 0 8px #ff9800, 0 0 16px #ff9800; }
+  80% { color: #2f81f7; text-shadow: 0 0 8px #2f81f7, 0 0 16px #2f81f7; }
+  100% { color: #ff4081; text-shadow: 0 0 8px #ff4081, 0 0 16px #ff4081; }
+`;
+
+const modalGlow = keyframes`
+  0% { box-shadow: 0 0 24px 4px #ff408155, 0 0 0 #0000; }
+  20% { box-shadow: 0 0 24px 4px #00bcd455, 0 0 0 #0000; }
+  40% { box-shadow: 0 0 24px 4px #cddc3955, 0 0 0 #0000; }
+  60% { box-shadow: 0 0 24px 4px #ff980055, 0 0 0 #0000; }
+  80% { box-shadow: 0 0 24px 4px #2f81f755, 0 0 0 #0000; }
+  100% { box-shadow: 0 0 24px 4px #ff408155, 0 0 0 #0000; }
+`;
 
 function normalizeName(name: string | undefined) {
   return (name || '').replace(/\./g, '').trim().toLowerCase();
@@ -96,7 +116,10 @@ function App() {
     const loadData = async () => {
       try {
         const data = await fetchMatchListData();
-        setMatches(data.matches || []);
+        // Filter out matches before now
+        const now = new Date();
+        const upcomingMatches = (data.matches || []).filter(match => new Date(match.start_date) >= now);
+        setMatches(upcomingMatches);
 
         // Fetch H2H for each match in parallel
         const h2hResults = await Promise.all(
@@ -477,8 +500,23 @@ function App() {
         </Container>
       </Box>
       {/* Modal for match details */}
-      <Dialog open={modalOpen} onClose={handleModalClose} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#161b22', color: '#c9d1d9', borderRadius: 2 } }}>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#21262d', color: '#f0f6fc', fontWeight: 700, fontSize: 22 }}>
+      <Dialog
+        open={modalOpen}
+        onClose={handleModalClose}
+        maxWidth="sm"
+        fullWidth
+        TransitionComponent={Fade}
+        PaperProps={{
+          sx: {
+            bgcolor: '#0d1117',
+            borderRadius: 2,
+            animation: `${modalGlow} 2.5s linear infinite`,
+            backgroundImage: 'none !important',
+            color: '#c9d1d9',
+          }
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#010409', color: '#f0f6fc', fontWeight: 700, fontSize: 22 }}>
           Match Details
           <IconButton onClick={handleModalClose} sx={{ color: '#8b949e' }}>
             <CloseIcon />
@@ -488,7 +526,9 @@ function App() {
           {selectedMatch && (
             <Box>
               <Typography variant="h6" sx={{ mb: 1, color: '#2f81f7', fontWeight: 700 }}>
-                {selectedMatch.participants.find(p => p.type === 'home_team')?.name} vs {selectedMatch.participants.find(p => p.type === 'away_team')?.name}
+                <span style={{ color: '#ff9800' }}>{selectedMatch.participants.find(p => p.type === 'home_team')?.name}</span>
+                <Box component="span" sx={{ fontWeight: 800, mx: 1.5, animation: `${glowVs} 2.5s linear infinite`, display: 'inline-block' }}>vs</Box>
+                <span style={{ color: '#ff9800' }}>{selectedMatch.participants.find(p => p.type === 'away_team')?.name}</span>
               </Typography>
               <Typography sx={{ mb: 1 }}>
                 <b>Date:</b> {new Date(selectedMatch.start_date).toLocaleString()}
@@ -506,7 +546,7 @@ function App() {
                     <Box>
                       <>
                         {Array.from({ length: h2hSummary[selectedMatch.id].aWins }).map((_, i) => (
-                          <span key={`modal-a-win-${i}`} style={{ color: '#2f81f7', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>✓</span>
+                          <span key={`modal-a-win-${i}`} style={{ color: '#1db954', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>✓</span>
                         ))}
                         {Array.from({ length: h2hSummary[selectedMatch.id].aLosses }).map((_, i) => (
                           <span key={`modal-a-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>❌</span>
@@ -517,7 +557,7 @@ function App() {
                     <Box>
                       <>
                         {Array.from({ length: h2hSummary[selectedMatch.id].bWins }).map((_, i) => (
-                          <span key={`modal-b-win-${i}`} style={{ color: '#2f81f7', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>✓</span>
+                          <span key={`modal-b-win-${i}`} style={{ color: '#1db954', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>✓</span>
                         ))}
                         {Array.from({ length: h2hSummary[selectedMatch.id].bLosses }).map((_, i) => (
                           <span key={`modal-b-loss-${i}`} style={{ color: '#e53935', fontWeight: 'bold', fontSize: '1.1em', display: 'inline-block', width: 20, textAlign: 'center', fontFamily: 'monospace' }}>❌</span>
@@ -543,7 +583,7 @@ function App() {
                       const todayMatchesA = (h2hRaw?.total?.home_team || []).filter((m: any) => isTodayUTC(m.date)).slice(0, 5);
                       return todayMatchesA.length > 0
                         ? todayMatchesA.map((m: any, i: number) => (
-                            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#2f81f7' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
+                            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#1db954' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
                           ))
                         : <RemoveCircleOutlineIcon sx={{ color: '#ff9800', fontSize: 22, verticalAlign: 'middle' }} />;
                     })()}
@@ -559,7 +599,7 @@ function App() {
                       const todayMatchesB = (h2hRaw?.total?.away_team || []).filter((m: any) => isTodayUTC(m.date)).slice(0, 5);
                       return todayMatchesB.length > 0
                         ? todayMatchesB.map((m: any, i: number) => (
-                            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#2f81f7' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
+                            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#1db954' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
                           ))
                         : <RemoveCircleOutlineIcon sx={{ color: '#ff9800', fontSize: 22, verticalAlign: 'middle' }} />;
                     })()}
@@ -579,7 +619,7 @@ function App() {
                       const last5A = (h2hRaw?.total?.home_team || []).slice(0, 5);
                       return last5A.length > 0
                         ? last5A.map((m: any, i: number) => (
-                            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#2f81f7' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
+                            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#1db954' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
                           ))
                         : <RemoveCircleOutlineIcon sx={{ color: '#ff9800', fontSize: 22, verticalAlign: 'middle' }} />;
                     })()}
@@ -595,7 +635,7 @@ function App() {
                       const last5B = (h2hRaw?.total?.away_team || []).slice(0, 5);
                       return last5B.length > 0
                         ? last5B.map((m: any, i: number) => (
-                            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#2f81f7' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
+                            <span key={i} style={{ fontFamily: 'monospace', display: 'inline-block', width: 20, textAlign: 'center', fontWeight: 'bold', fontSize: '1.1em', color: m.badge === 'W' ? '#1db954' : '#e53935' }}>{m.badge === 'W' ? '✓' : '❌'}</span>
                           ))
                         : <RemoveCircleOutlineIcon sx={{ color: '#ff9800', fontSize: 22, verticalAlign: 'middle' }} />;
                     })()}

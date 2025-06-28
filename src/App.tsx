@@ -19,7 +19,6 @@ import {
 } from '@mui/material';
 import { fetchMatchListData, fetchH2H } from './services/api';
 import { Match } from './types/api';
-import { keyframes } from '@mui/system';
 import StarIcon from '@mui/icons-material/Star';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
